@@ -54,6 +54,8 @@ int main(int argc, char **argv){
 
     char* option = argv[1];
 
+    sem_t *buf_sem;
+
     if(!strcmp(option, "create")){
 
         char* key_name = argv[2];
@@ -73,11 +75,18 @@ int main(int argc, char **argv){
             exit(1);
         } 
 
-        create_semaphore();
+        buf_sem = sem_open(BUF_SEM_NAME, O_CREAT, 0666, 1);
+
+        if(buf_sem == (void*) -1) {
+            perror("sem_open error");
+            exit(1);
+        }
     }
 
     else if(!strcmp(option, "destroy")){
 	    int key_id = atoi(argv[2]);
+        sem_close(buf_sem);
+        sem_unlink(BUF_SEM_NAME);
         destroy_shmem(key_id);
     }
 

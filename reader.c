@@ -14,18 +14,12 @@ int main(int argc, char **argv){
   
     char *str = (char*) shmat(shmid,(void*)0, 0); 
 
-    puts("holi");
-
     sem_t *buf_sem = sem_open(BUF_SEM_NAME, O_RDONLY, 0666, 1);
-
-    puts("holi2");
 
     if(buf_sem == (void*) -1) {
         perror("sem_open error");
         exit(1);
     }
-
-    puts("holi3");
 
     int sts = sem_trywait(buf_sem);
 
@@ -34,8 +28,6 @@ int main(int argc, char **argv){
         shmdt(str); //Se desconecta de la memoria compartida
 
         sem_post(buf_sem);
-        sem_close(buf_sem);
-        sem_unlink(BUF_SEM_NAME);
         printf("Sem deattached succesfully \n");
     } else
     {
