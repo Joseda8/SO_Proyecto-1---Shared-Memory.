@@ -20,7 +20,7 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    int sts = sem_trywait(buf_sem);
+    int sts = sem_wait(buf_sem);
 
     if(sts == 0) {
         printf("Write Data : "); 
@@ -32,7 +32,7 @@ int main(int argc, char **argv){
 
         sem_post(buf_sem);
 
-        printf("Sem up succesfully \n");
+        printf("Sem locked and released! \n");
         
     } else if(errno == EAGAIN) {
         printf("Semaphore is locked \n");

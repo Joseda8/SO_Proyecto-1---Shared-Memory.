@@ -21,14 +21,14 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    int sts = sem_trywait(buf_sem);
+    int sts = sem_wait(buf_sem);
 
     if(sts == 0){
         printf("Data read from memory: %s\n", str); 
         shmdt(str); //Se desconecta de la memoria compartida
 
         sem_post(buf_sem);
-        printf("Sem deattached succesfully \n");
+        printf("Sem locked and released! \n");
     } else
     {
         perror("sem_trywait error");
