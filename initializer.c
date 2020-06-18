@@ -15,8 +15,15 @@
 
 #define BUF_SEM_NAME "BUF_SEM"
 
-int consumers_flag = 1;
-int producers_flag = 1;
+
+typedef struct{
+    char* key;
+    int buffer_id;
+    int size;
+    int consumers_current;
+    int producers_current;
+    char msg[];
+} Buffer;
 
 /*
 Se elimina una memoria compartida
@@ -33,10 +40,20 @@ Se crea una memoria compartida
 @param key_id ID de la memoria compartida a utilizar
 @param size Tamaño en bytes de la memoria compartida a utilizar
 */
-int create_shmem(char* key_name, int key_id, int size){
-    key_t key = ftok(key_name, key_id); //Crea una llave única
-    int shmid = shmget(key, size, 0666|IPC_CREAT); //Identificador de la memoria compartida
-    printf("New shared memory with ID: %i\n", shmid);
+int create_shmem(char* key_name, int size){
+    key_t key = 5678;
+    int shmid = shmget(key, sizeof(Buffer), IPC_CREAT | 0666);
+
+    Buffer *buffer = shmat(shmid, NULL, 0);
+    buffer->key=key_name;
+    buffer->size=size;
+    buffer->buffer_id=shmid;
+    buffer->consumers_current=0;
+    buffer->producers_current=0;
+
+    char aux[buffer->size];
+    strcpy(buffer->msg, aux);
+    printf("New shared memory called %s and ID: %i\n", buffer->key, buffer->buffer_id);
     return shmid;
 }
 
@@ -59,9 +76,8 @@ int main(int argc, char **argv){
     if(!strcmp(option, "create")){
 
         char* key_name = argv[2];
-        int key_id = atoi(argv[3]);
-        int size = atoi(argv[4]);
-        int shmem_id = create_shmem(key_name, key_id, size);
+        int size = atoi(argv[3]);
+        int shmem_id = create_shmem(key_name, size);
 
         if(shmem_id < 0) {
             perror("Error creating shared memory");
