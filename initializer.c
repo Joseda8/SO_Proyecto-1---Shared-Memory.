@@ -17,7 +17,7 @@
 
 
 typedef struct{
-    char* key;
+    char key[25];
     int buffer_id;
     int size;
     int consumers_current;
@@ -45,7 +45,8 @@ int create_shmem(char* key_name, int size){
     int shmid = shmget(key, sizeof(Buffer), IPC_CREAT | 0666);
 
     Buffer *buffer = shmat(shmid, NULL, 0);
-    buffer->key=key_name;
+
+    strcpy(buffer->key, key_name);
     buffer->size=size;
     buffer->buffer_id=shmid;
     buffer->consumers_current=0;

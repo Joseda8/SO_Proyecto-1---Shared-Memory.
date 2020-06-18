@@ -10,7 +10,7 @@
 #define BUF_SEM_NAME "BUF_SEM"
 
 typedef struct{
-    char* key;
+    char key[25];
     int buffer_id;
     int size;
     int consumers_current;
@@ -43,7 +43,7 @@ int main(int argc, char **argv){
     if(sts == 0) {
 
         strcpy(buffer->msg, msg);
-        printf("Data written in buffer: %s\n", buffer->msg); 
+        printf("Data written in buffer %s: %s\n", buffer->key, buffer->msg); 
 
         shmdt(buffer);
 

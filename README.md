@@ -35,9 +35,9 @@ Create a message.
 /writer 3600 "Hello There!"
 ```
 
-##### Using writer.
+##### Using reader.
 
-Create a message.
+Read a message.
 ```
 /reader <ID>
 /reader 3600
