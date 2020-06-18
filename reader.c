@@ -20,6 +20,13 @@ typedef struct{
 
   
 int main(int argc, char **argv){
+
+    int nparams = argc - 1;
+
+    if(nparams < 1) {
+        printf( "Wrong number of arguments\n" );
+        return -1;
+    }
   
     int shmid = atoi(argv[1]); //ID de la memoria en la que se va a leer
 

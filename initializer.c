@@ -70,11 +70,23 @@ void create_semaphore() {
 
 int main(int argc, char **argv){
 
+    int nparams = argc - 1;
+
+    if(nparams < 1) {
+        printf( "Wrong number of arguments\n" );
+        return -1;
+    }
+
     char* option = argv[1];
 
     sem_t *buf_sem;
 
     if(!strcmp(option, "create")){
+
+        if( nparams != 3) {
+            printf( "Wrong number of arguments\n" );
+            return -1;
+        }
 
         char* key_name = argv[2];
         int size = atoi(argv[3]);
@@ -101,6 +113,11 @@ int main(int argc, char **argv){
     }
 
     else if(!strcmp(option, "destroy")){
+        if( nparams != 2) {
+            printf( "Wrong number of arguments\n" );
+            return -1;
+        }
+
 	    int key_id = atoi(argv[2]);
         sem_close(buf_sem);
         sem_unlink(BUF_SEM_NAME);
