@@ -11,19 +11,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
-
+#include "buffer_struct.h"
 
 #define BUF_SEM_NAME "BUF_SEM"
-
-
-typedef struct{
-    char key[25];
-    int buffer_id;
-    int size;
-    int consumers_current;
-    int producers_current;
-    char msg[];
-} Buffer;
 
 /*
 Se elimina una memoria compartida
@@ -51,10 +41,21 @@ int create_shmem(char* key_name, int size){
     buffer->buffer_id=shmid;
     buffer->consumers_current=0;
     buffer->producers_current=0;
+    buffer->consumers_total=0;
+    buffer->producers_total=0;
+    buffer->consumers_key_removed=0;
+    buffer->time_waited=0;
+    buffer->time_waiting=0;
+    buffer->time_locked=0;
+    buffer->time_usr=0;
+    buffer->time_kernel=0;
+    buffer->total_msg=0;
+    strcpy(buffer->finish_reader, "EXIT");
 
     char aux[buffer->size];
     strcpy(buffer->msg, aux);
     printf("New shared memory called %s and ID: %i\n", buffer->key, buffer->buffer_id);
+    shmdt(buffer);
     return shmid;
 }
 

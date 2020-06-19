@@ -6,19 +6,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "buffer_struct.h"
 
 #define BUF_SEM_NAME "BUF_SEM"
 
-typedef struct{
-    char key[25];
-    int buffer_id;
-    int size;
-    int consumers_current;
-    int producers_current;
-    char msg[];
-} Buffer;
-
-  
 int main(int argc, char **argv){
 
     int nparams = argc - 1;
