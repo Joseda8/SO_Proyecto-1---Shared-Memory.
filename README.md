@@ -9,7 +9,7 @@ How to compile C files.
 
 ```
 gcc initializer.c -o init -pthread
-gcc writer.c -o writer -pthread
+gcc writer.c -o writer -pthread -lm
 gcc reader.c -o reader -pthread 
 ```
 
