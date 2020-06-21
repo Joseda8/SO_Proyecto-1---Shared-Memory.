@@ -52,7 +52,6 @@ int create_shmem(char* key_name, int size){
     buffer->flag_stop_producer = 0;
     buffer->total_msg=0;
     strcpy(buffer->finish_reader, "EXIT");
-    buffer->flag_stop_producer = 0;
 
     char aux[buffer->size];
     strcpy(buffer->msg, aux);
