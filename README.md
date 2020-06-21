@@ -23,24 +23,24 @@ Create a buffer.
 
 Delete a buffer.
 ```
-/init destroy <ID>
-/init destroy 3600
+./init destroy <ID>
+./init destroy 3600
 ```
 
 ##### Using writer.
 
 Create a message.
 ```
-/writer <ID> <message>
-/writer 3600 "Hello There!"
+./writer <ID> <wait mean> <message>
+./writer 3600 0.4 "Hello There!"
 ```
 
 ##### Using reader.
 
 Read a message.
 ```
-/reader <ID>
-/reader 3600
+./reader <ID>
+./reader 3600
 ```
 
 
