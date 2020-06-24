@@ -10,7 +10,7 @@ How to compile C files.
 ```
 gcc initializer.c -o init -pthread
 gcc writer.c -o writer -pthread -lm
-gcc reader.c -o reader -pthread 
+gcc reader.c -o reader -pthread -lm
 ```
 
 ##### Using initializer.
@@ -39,8 +39,8 @@ Create a message.
 
 Read a message.
 ```
-./reader <ID>
-./reader 3600
+./reader <ID> <wait mean> <operation mode>
+./reader 3600 4 auto
 ```
 
 
