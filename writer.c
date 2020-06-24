@@ -178,8 +178,6 @@ int main(int argc, char **argv){
 
         prod_stats.wait_time += time_until_msg;
 
-        char *f_msg = build_message(magic_number, msg);  // construye el mensaje nuevo.
-
         begin = clock(); // timer para medir tiempo bloqueado por semáforo.
 
         // trata de colocar un mensaje en el buffer.
@@ -192,6 +190,7 @@ int main(int argc, char **argv){
             int index_available = find_space(buffer->msg, spaces_max);
 
             if(index_available >= 0) {
+                char *f_msg = build_message(magic_number, msg);  // construye el mensaje nuevo.
                 strcpy(buffer->msg + index_available, f_msg);
                 printf("Message written in buffer successfully! \n");
                 printf("Message: %s \n ", f_msg);
@@ -206,7 +205,7 @@ int main(int argc, char **argv){
             } else
             {
                 printf("Buffer is full... \n");
-                free(f_msg);
+                //free(f_msg);
                 sem_post(buf_sem); // libera el semáforo.
                 sleep(SLEEP_TIME);
             }
@@ -234,7 +233,7 @@ int main(int argc, char **argv){
         printf("Deattaching producer from Buffer... \n");
         shmdt(buffer);
 
-        printf("Producer has ended elegantly! \n");
+        printf("Producer Ended. Let's take a look at the stats! \n");
             
     } else if(errno == EAGAIN) {
         printf("Semaphore is locked \n");
