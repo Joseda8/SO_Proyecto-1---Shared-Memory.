@@ -127,7 +127,9 @@ int main(int argc, char **argv){
 
         char r_msg[MSG_LEN] = {0};
 
-        // trata de colocar un mensaje en el buffer.
+        cons_stats.total_msgs_read += 1; // error
+
+        // trata de leer un mensaje en el buffer.
         if(!sem_wait(buf_sem)) {  // espera por el semáforo.
 
             clock_t end = clock();
@@ -142,23 +144,28 @@ int main(int argc, char **argv){
                 continue;    
             }
 
-            cons_stats.total_msgs_read += 1;
-
             current_buffer_index = index_available + MSG_LEN; // Actualiza el indice al siguiente mensaje del leido 
 
             memcpy(r_msg, buffer->msg + index_available, MSG_LEN);
             printf("Message read from buffer successfully! \n");
             printf("Message: %s \n", r_msg);
-            printf("Index: %d ", index_available);
-            printf("Active Producers: %d ", buffer->producers_current); 
-            printf("Active Consumers: %d ", buffer->consumers_current);  
+            printf("Index: %d \n", index_available);
+            printf("Active Producers: %d \n", buffer->producers_current); 
+            printf("Active Consumers: %d \n\n", buffer->consumers_current);  
 
             // TODO: condiciones de terminacion
+            char magic_msg_number = r_msg[27];
+            int mag_msg_number = magic_msg_number - '0';
+            if (magic_number == mag_msg_number) {
+                strcat(cons_stats.exitCause, "Magic number matched!");
+                sem_post(buf_sem);
+                break;
+            }
+
             
             memset(buffer->msg + index_available, 0, MSG_LEN); // Borra el mensaje leido
 
             sem_post(buf_sem); // libera el semáforo.
-            printf("Message recibed! \n\n"); 
      
         } else if(errno == EAGAIN) {
             printf("Semaphore is locked \n");
@@ -178,7 +185,8 @@ int main(int argc, char **argv){
         cons_stats.kernel_time = sys_time;
     }
 
-    printf("Total msg read: %d \n Time waited: %f \n Time blocked: %f \n Kernel Time: %f \n", cons_stats.total_msgs_read, cons_stats.wait_time,
+    printf("Consumer about to exit...\n");
+    printf("Process ID: %d \nProcess end cause: %s \nTotal msg read: %d \nTime waited: %f \nTime blocked: %f \nKernel Time: %f \n", cons_stats.pid, cons_stats.exitCause, cons_stats.total_msgs_read, cons_stats.wait_time,
     cons_stats.time_blocked, cons_stats.kernel_time);
 
     // stops the consumer

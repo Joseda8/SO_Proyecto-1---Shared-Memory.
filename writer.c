@@ -40,6 +40,7 @@ char *build_message(int mnumber, char* message) {
 
     // prepara parte de fecha
     strcat(time_msg, asctime(timeinfo));
+    time_msg[24] = 0;  // Gabriel: perro para quitarle el \n que no me cuadra como se ve en el printf
 
     // prepara parte de número mágico.
     char id_msg[2] = {0}; 
