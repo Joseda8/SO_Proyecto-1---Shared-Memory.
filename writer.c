@@ -142,22 +142,19 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    int stopped;
-
     begin = clock();
 
     // aumenta variables globales.
     if(!sem_wait(buf_sem)) { // Trata de utilizar el semáforo.
         end = clock();
         prod_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC;
-        
+
         buffer->producers_current += 1;
         buffer->producers_total += 1;
-        stopped = buffer->flag_stop_producer;
         sem_post(buf_sem);  // Libera el semáforo.
     }
    
-    while(!stopped) {
+    while(1) {
 
         begin = clock(); // timer para medir tiempo bloqueado por semáforo.
 
@@ -166,15 +163,10 @@ int main(int argc, char **argv){
             prod_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC; // calcula tiempo bloqueado por el semáforo.
             
             if(buffer->flag_stop_producer) { // verifica que no se hayan finalizado los servicios.
-                /*buffer->producers_current -= 1;
-                printf("Productor con PID %d será finalizado... \n", prod_stats.pid);
-                shmdt(buffer);
-                printf("Productor desasociado de memoria compartida... \n");
-                printf("Finalizando productor... \n");
-                return 0;*/
                 sem_post(buf_sem);
                 break;
             }
+            
             sem_post(buf_sem);
         }
 
