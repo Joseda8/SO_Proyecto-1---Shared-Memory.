@@ -41,6 +41,7 @@ Read a message.
 ```
 ./reader <ID> <wait mean> <operation mode>
 ./reader 3600 4 auto
+./reader 3600 4 manual
 ```
 
 

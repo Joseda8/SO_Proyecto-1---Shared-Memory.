@@ -4,12 +4,13 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/resource.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <math.h>
-#include <sys/times.h>
+#include <sys/time.h>
 #include "buffer_struct.h"
 
 #define FALSE 0
@@ -18,15 +19,16 @@
 #define AUTO_MODE "auto"
 #define MANUAL_MODE "manual"
 #define MSG_LEN 60
-#define MAX_IN_MSG_LEN 29
+#define SLEEP_TIME 5
 
 typedef struct{
     int pid;
-    char exitCause[20];
+    char exitCause[30];
     int total_msgs_read;       // total de mensajes consumidos.
-    double wait_time;    // tiempo esperado para poner un mensaje.
-    double time_blocked; // tiempo bloqueado por semáforo.
-    double kernel_time;  // tiempo en kernel.
+    int wait_time;    // tiempo esperado para poner un mensaje.
+    int time_blocked; // tiempo bloqueado por semáforo.
+    int kernel_time;  // tiempo en kernel.
+    int mode_flag; // bandera de modo de operacion
 } Stats;
 
 int get_waiting_time(double lambda) {
@@ -58,6 +60,8 @@ int find_message(char *buf, int indexes, int current_index) {
 
 int main(int argc, char **argv){
 
+    struct rusage usage;
+
     int nparams = argc - 1;
 
     if(nparams < 2) {
@@ -69,20 +73,9 @@ int main(int argc, char **argv){
     double lambda = atof(argv[2]);
     char* mode = argv[3];
 
-    if(!strcmp(mode, MANUAL_MODE)) {
-        // Bandera a modo de operacion manual
-    } else if (!strcmp(mode, AUTO_MODE)) {
-        // Bandera a modo de operacion automatico
-    } else {
-        perror("Undefined operation mode");
-        exit(1);
-    }
-
     srand((unsigned)time(NULL));
 
-    int tics_per_second = sysconf(_SC_CLK_TCK);
-
-    Stats cons_stats = {getpid(), "", 0, 0.0, 0.0, 0.0};
+    Stats cons_stats = {getpid(), "", 0, 0, 0, 0, 1};
 
     int magic_number = cons_stats.pid % 6; // calcula número mágico.
     
@@ -90,9 +83,12 @@ int main(int argc, char **argv){
 
     int spaces_max = (int)floor(buffer->size / MSG_LEN); // Calcula el número de índices que pueden tener mensajes.
 
-    sem_t *buf_sem = sem_open(BUF_SEM_NAME, O_RDONLY, 0666, 1);
+    sem_t *buf_sem = sem_open(BUF_SEM_NAME, O_RDONLY);
 
     int current_buffer_index = 0;  // Posicion del buffer por la que se va leyendo
+
+    struct timeval begin;  // Timers para medir tiempo bloqueado por semáforos.
+    struct timeval end;
 
     if(buf_sem == (void*) -1) {
         perror("sem_open error");
@@ -104,47 +100,79 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    int stopped;
+    if(!strcmp(mode, MANUAL_MODE)) {
+        // Bandera a modo de operacion manual
+        cons_stats.mode_flag = 0;
+    } else if (!strcmp(mode, AUTO_MODE)) {
+        // Bandera a modo de operacion automatico
+        cons_stats.mode_flag = 1;
+    } else {
+        perror("Undefined operation mode");
+        exit(1);
+    }
+
+    gettimeofday(&begin, NULL);
 
     // aumenta variables globales.
     if(!sem_wait(buf_sem)) { // Trata de utilizar el semáforo.
+        gettimeofday(&end, NULL);
+        cons_stats.time_blocked += end.tv_usec - begin.tv_usec;
+
         buffer->consumers_current += 1;
         buffer->consumers_total += 1;
         sem_post(buf_sem);  // Libera el semáforo.
     }
    
-    while(TRUE) {  // Busy waiting, falta lo de mimir
+    while(TRUE) { 
 
-        double time_until_msg = get_waiting_time(lambda);  // obtiene próximo tiempo de espera aleatorio.
+        if (cons_stats.mode_flag) {
 
-        printf("Waiting for: %f \n", time_until_msg);
+            int time_until_msg = get_waiting_time(lambda);  // obtiene próximo tiempo de espera aleatorio.
 
-        sleep(time_until_msg);  // espera para leer un mensaje.
+            printf("Waiting for: %d seconds\n", time_until_msg);
 
-        cons_stats.wait_time += time_until_msg;
+            sleep(time_until_msg);  // espera para leer un mensaje.
 
-        clock_t begin = clock(); // timer para medir tiempo bloqueado por semáforo.
+            cons_stats.wait_time += time_until_msg;
+
+        } else {
+
+            time_t begint = time(NULL);
+
+            printf("Press [Enter] key to read a message \n");
+            getchar();
+
+            time_t endt = time(NULL);
+
+            cons_stats.wait_time += endt - begint;
+        }
+
+        gettimeofday(&begin, NULL); // timer para medir tiempo bloqueado por semáforo.
 
         char r_msg[MSG_LEN] = {0};
-
-        cons_stats.total_msgs_read += 1; // error
 
         // trata de leer un mensaje en el buffer.
         if(!sem_wait(buf_sem)) {  // espera por el semáforo.
 
-            clock_t end = clock();
+            gettimeofday(&end, NULL);
 
-            cons_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC; // calcula tiempo bloqueado por el semáforo.
+            cons_stats.time_blocked += end.tv_usec - begin.tv_usec; // calcula tiempo bloqueado por el semáforo.
 
             int index_available = find_message(buffer->msg, spaces_max, current_buffer_index);
 
             if (index_available == -1){
+                printf("Waiting for a message...\n");
                 current_buffer_index = 0;
                 sem_post(buf_sem);
+                sleep(SLEEP_TIME);
                 continue;    
             }
 
             current_buffer_index = index_available + MSG_LEN; // Actualiza el indice al siguiente mensaje del leido 
+            if (current_buffer_index == (spaces_max * MSG_LEN)) {
+                current_buffer_index = 0;     // Recorrido circular del buffer
+            }
+
 
             memcpy(r_msg, buffer->msg + index_available, MSG_LEN);
             printf("Message read from buffer successfully! \n");
@@ -153,15 +181,24 @@ int main(int argc, char **argv){
             printf("Active Producers: %d \n", buffer->producers_current); 
             printf("Active Consumers: %d \n\n", buffer->consumers_current);  
 
-            // TODO: condiciones de terminacion
+            // Condiciones de terminacion
             char magic_msg_number = r_msg[27];
             int mag_msg_number = magic_msg_number - '0';
             if (magic_number == mag_msg_number) {
                 strcat(cons_stats.exitCause, "Magic number matched!");
+                cons_stats.total_msgs_read += 1;
                 sem_post(buf_sem);
                 break;
             }
 
+            if (!strcmp(r_msg, "(EXIT)")){
+                strcat(cons_stats.exitCause, "EXIT command recibed!");
+                cons_stats.total_msgs_read += 1;
+                sem_post(buf_sem);
+                break;
+            }
+
+            cons_stats.total_msgs_read += 1;
             
             memset(buffer->msg + index_available, 0, MSG_LEN); // Borra el mensaje leido
 
@@ -174,19 +211,12 @@ int main(int argc, char **argv){
         }
     }
 
-    struct tms times_struct;
-    clock_t ptimes = times(&times_struct);
+    getrusage(RUSAGE_SELF, &usage);
 
-    if(ptimes == -1) {
-        perror("Couldn't get times of process");
-        exit(1);
-    } else {
-        double sys_time = ((double)times_struct.tms_stime) / tics_per_second;
-        cons_stats.kernel_time = sys_time;
-    }
+    cons_stats.kernel_time += usage.ru_stime.tv_usec;
 
     printf("Consumer about to exit...\n");
-    printf("Process ID: %d \nProcess end cause: %s \nTotal msg read: %d \nTime waited: %f \nTime blocked: %f \nKernel Time: %f \n", cons_stats.pid, cons_stats.exitCause, cons_stats.total_msgs_read, cons_stats.wait_time,
+    printf("Process ID: %d \nProcess end cause: %s \nTotal msg read: %d \nTime waited: %d seconds\nTime blocked: %d microseconds\nKernel Time: %d microseconds\n", cons_stats.pid, cons_stats.exitCause, cons_stats.total_msgs_read, cons_stats.wait_time,
     cons_stats.time_blocked, cons_stats.kernel_time);
 
     // stops the consumer
