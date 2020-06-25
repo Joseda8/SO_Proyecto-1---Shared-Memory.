@@ -58,6 +58,22 @@ int find_message(char *buf, int indexes, int current_index) {
     return -1;
 }
 
+void blue() {
+    printf("\033[1;34m");
+}
+
+void green() {
+    printf("\033[1;32m");
+}
+
+void magenta() {
+    printf("\033[1;35m");
+}
+
+void reset() {
+    printf("\033[0m");
+}
+
 int main(int argc, char **argv){
 
     struct rusage usage;
@@ -129,7 +145,10 @@ int main(int argc, char **argv){
 
             int time_until_msg = get_waiting_time(lambda);  // obtiene próximo tiempo de espera aleatorio.
 
-            printf("Waiting for: %d seconds\n", time_until_msg);
+            printf("Waiting for: ");
+            blue();
+            printf("%d seconds\n\n", time_until_msg);
+            reset();
 
             sleep(time_until_msg);  // espera para leer un mensaje.
 
@@ -139,7 +158,11 @@ int main(int argc, char **argv){
 
             time_t begint = time(NULL);
 
-            printf("Press [Enter] key to read a message \n");
+            printf("Press ");
+            blue();
+            printf("[Enter]");
+            reset();
+            printf(" key to read a message \n");
             getchar();
 
             time_t endt = time(NULL);
@@ -161,7 +184,9 @@ int main(int argc, char **argv){
             int index_available = find_message(buffer->msg, spaces_max, current_buffer_index);
 
             if (index_available == -1){
+                magenta();
                 printf("Waiting for a message...\n");
+                reset();
                 current_buffer_index = 0;
                 sem_post(buf_sem);
                 sleep(SLEEP_TIME);
@@ -175,11 +200,25 @@ int main(int argc, char **argv){
 
 
             memcpy(r_msg, buffer->msg + index_available, MSG_LEN);
+            green();
             printf("Message read from buffer successfully! \n");
-            printf("Message: %s \n", r_msg);
-            printf("Index: %d \n", index_available);
-            printf("Active Producers: %d \n", buffer->producers_current); 
-            printf("Active Consumers: %d \n\n", buffer->consumers_current);  
+            reset();
+            printf("Message:          ");
+            blue();
+            printf("%s \n", r_msg);
+            reset();
+            printf("Index:            ");
+            blue();
+            printf("%d \n", index_available);
+            reset();
+            printf("Active Producers: ");
+            blue();
+            printf("%d \n", buffer->producers_current);
+            reset(); 
+            printf("Active Consumers: ");
+            blue();
+            printf("%d \n\n", buffer->consumers_current);
+            reset();  
 
             // Condiciones de terminacion
             char magic_msg_number = r_msg[27];
@@ -215,22 +254,52 @@ int main(int argc, char **argv){
 
     cons_stats.kernel_time += usage.ru_stime.tv_usec;
 
-    printf("Consumer about to exit...\n");
-    printf("Process ID: %d \nProcess end cause: %s \nTotal msg read: %d \nTime waited: %d seconds\nTime blocked: %d microseconds\nKernel Time: %d microseconds\n", cons_stats.pid, cons_stats.exitCause, cons_stats.total_msgs_read, cons_stats.wait_time,
-    cons_stats.time_blocked, cons_stats.kernel_time);
+    magenta();
+    printf("Consumer about to exit...\n\n");
+
+    printf("Final Usage Stats:\n");
+    reset();
+    printf("Process ID:         ");
+    blue();
+    printf("%d \n", cons_stats.pid);
+    reset();
+    printf("Process end cause:  ");
+    blue();
+    printf("%s \n", cons_stats.exitCause);
+    reset(); 
+    printf("Total msg read:     ");
+    blue();
+    printf("%d \n", cons_stats.total_msgs_read);
+    reset();
+    printf("Time waited:        ");
+    blue();
+    printf("%d seconds\n", cons_stats.wait_time);
+    reset();
+    printf("Time blocked:       ");
+    blue();
+    printf("%d microseconds\n", cons_stats.time_blocked);
+    reset();
+    printf("Time in kernel:     ");
+    blue();
+    printf("%d microseconds\n\n", cons_stats.kernel_time);
+    reset();
 
     // stops the consumer
     if(!sem_wait(buf_sem)) {
         buffer->consumers_current -= 1;
 
-        sem_post(buf_sem);
-        printf("Releasing semaphore...\n");
+        magenta();
 
-        printf("Deattaching consumer from Buffer... \n");
+        printf("Releasing semaphore...\n");
+        sem_post(buf_sem);
+
+        printf("Deattaching consumer from Buffer... \n\n");
         shmdt(buffer);
 
-        printf("Consumer ended elegantly! \n");
-            
+        green();
+        printf("Consumer ended successfully! \n\n");
+        reset();    
+        
     } else if(errno == EAGAIN) {
         printf("Semaphore is locked \n");
     } else {
