@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <math.h>
-#include <sys/times.h>
+#include <sys/time.h>
 #include "buffer_struct.h"
 
 
@@ -22,10 +22,26 @@
 typedef struct{
     int pid;
     int total_msgs;       // total de mensajes.
-    double wait_time;    // tiempo esperado para poner un mensaje.
-    double time_blocked; // tiempo bloqueado por semáforo.
-    double kernel_time;  // tiempo en kernel.
+    int wait_time;    // tiempo esperado para poner un mensaje.
+    int time_blocked; // tiempo bloqueado por semáforo.
+    int kernel_time;  // tiempo en kernel.
 } Stats;
+
+void blue() {
+    printf("\033[1;34m");
+}
+
+void green() {
+    printf("\033[1;32m");
+}
+
+void magenta() {
+    printf("\033[1;35m");
+}
+
+void reset() {
+    printf("\033[0m");
+}
 
 double get_waiting_time(double lambda) {
     double u;
@@ -34,11 +50,34 @@ double get_waiting_time(double lambda) {
 }
 
 void show_stats(Stats *stats) {
-    printf("PID: %d \n", stats->pid);
-    printf("Total messages produced: %d \n", stats->total_msgs);
-    printf("Wait time: %f \n", stats->wait_time);
-    printf("Blocked time: %f \n", stats->time_blocked);
-    printf("Kernel time: %f \n", stats->kernel_time);
+    magenta();
+    printf("Final Usage Stats:\n");
+
+    reset();
+    printf("Process ID:         ");
+    blue();
+    printf("%d \n", stats->pid);
+    reset();
+
+    printf("Total msg produced: ");
+    blue();
+    printf("%d \n", stats->total_msgs);
+    reset();
+
+    printf("Time waited:        ");
+    blue();
+    printf("%d seconds\n", stats->wait_time);
+    reset();
+
+    printf("Time blocked:       ");
+    blue();
+    printf("%d microseconds\n", stats->time_blocked);
+    reset();
+
+    printf("Time in kernel:     ");
+    blue();
+    printf("%d microseconds\n\n", stats->kernel_time);
+    reset();
 }
 
 char *build_message(int mnumber, char* message) {
@@ -118,20 +157,10 @@ int main(int argc, char **argv){
 
     int spaces_max = (int)floor(buffer->size / MSG_LEN); // Calcula el número de índices que pueden tener los mensajes.
 
-    clock_t begin;  // Timers para medir tiempo bloqueado por semáforos.
-    clock_t end;
-
-    /*int ctr = 0;
-
-    while(ctr < 1024) {
-        printf("curr pos %d: %c \n", ctr, buffer->msg[ctr]); 
-        //buffer->msg[ctr] = ' ';
-        ctr++;
-    }*/
+    struct timeval begin, end;  // Timers para medir tiempo de bloqueo por semáforo.
 
     sem_t *buf_sem = sem_open(BUF_SEM_NAME, O_RDONLY);
 
-    
     if(buf_sem == (void*) -1) {
         perror("sem_open error");
         exit(1);
@@ -142,12 +171,12 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    begin = clock();
+    gettimeofday(&begin, NULL);
 
     // aumenta variables globales.
     if(!sem_wait(buf_sem)) { // Trata de utilizar el semáforo.
-        end = clock();
-        prod_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC;
+        gettimeofday(&end, NULL);
+        prod_stats.time_blocked += end.tv_usec - begin.tv_usec;
 
         buffer->producers_current += 1;
         buffer->producers_total += 1;
@@ -156,47 +185,66 @@ int main(int argc, char **argv){
    
     while(1) {
 
-        begin = clock(); // timer para medir tiempo bloqueado por semáforo.
+        gettimeofday(&begin, NULL);
 
         if(!sem_wait(buf_sem)) {
-            end = clock();
-            prod_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC; // calcula tiempo bloqueado por el semáforo.
+            gettimeofday(&end, NULL);
+            prod_stats.time_blocked += end.tv_usec - begin.tv_usec;
             
             if(buffer->flag_stop_producer) { // verifica que no se hayan finalizado los servicios.
                 sem_post(buf_sem);
                 break;
-            }
-            
+            }          
             sem_post(buf_sem);
         }
 
         double time_until_msg = get_waiting_time(lambda);  // obtiene próximo tiempo de espera aleatorio.
 
-        printf("Waiting for: %f \n", time_until_msg);
+        printf("Waiting for: ");
+        blue();
+        printf("%f seconds\n\n", time_until_msg);
+        reset();
 
         sleep(time_until_msg);  // espera para enviar el mensaje.
 
         prod_stats.wait_time += time_until_msg;
 
-        begin = clock(); // timer para medir tiempo bloqueado por semáforo.
+        gettimeofday(&begin, NULL);
 
         // trata de colocar un mensaje en el buffer.
         if(!sem_wait(buf_sem)) {  // espera por el semáforo.
 
-            end = clock();
-
-            prod_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC; // calcula tiempo bloqueado por el semáforo.
+            gettimeofday(&end, NULL);
+            prod_stats.time_blocked += end.tv_usec - begin.tv_usec;
 
             int index_available = find_space(buffer->msg, spaces_max);
 
             if(index_available >= 0) {
                 char *f_msg = build_message(magic_number, msg);  // construye el mensaje nuevo.
                 strcpy(buffer->msg + index_available, f_msg);
+
+                green();
                 printf("Message written in buffer successfully! \n");
-                printf("Message: %s \n ", f_msg);
-                printf("Index: %d \n", index_available);
-                printf("Active Producers: %d \n", buffer->producers_current); 
-                printf("Active Consumers: %d \n", buffer->consumers_current);  
+                reset();
+
+                printf("Message:          ");
+                blue();
+                printf("%s \n", f_msg);
+                reset();
+
+                printf("Index:            ");
+                blue();
+                printf("%d \n", index_available);
+                reset();
+
+                printf("Active Producers: ");
+                blue();
+                printf("%d \n", buffer->producers_current);
+                reset(); 
+                printf("Active Consumers: ");
+                blue();
+                printf("%d \n\n", buffer->consumers_current);
+                reset();  
                 
                 free(f_msg);               
                 printf("Message sent! \n\n"); 
@@ -204,7 +252,9 @@ int main(int argc, char **argv){
                 prod_stats.total_msgs += 1;
             } else
             {
+                blue();
                 printf("Buffer is full... \n");
+                reset();
                 //free(f_msg);
                 sem_post(buf_sem); // libera el semáforo.
                 sleep(SLEEP_TIME);
@@ -216,24 +266,28 @@ int main(int argc, char **argv){
         }
     }
 
-    begin = clock(); // timer para medir tiempo bloqueado por semáforo.
+    gettimeofday(&begin, NULL);
 
     // stops the producer
     if(!sem_wait(buf_sem)) {
 
-        end = clock();
-        prod_stats.time_blocked += (double)(end - begin) / CLOCKS_PER_SEC;
+        gettimeofday(&end, NULL);
+        prod_stats.time_blocked += end.tv_usec - begin.tv_usec;
 
         buffer->producers_current -= 1;
         buffer->total_msg += prod_stats.total_msgs;
 
-        sem_post(buf_sem);
-        printf("Releasing semaphore...\n");
+        magenta();
 
-        printf("Deattaching producer from Buffer... \n");
+        printf("Releasing semaphore...\n");
+        sem_post(buf_sem);
+
+        printf("Deattaching consumer from Buffer... \n\n");
         shmdt(buffer);
 
-        printf("Producer Ended. Let's take a look at the stats! \n");
+        green();
+        printf("Producer ended successfully! Take a look to the stats:\n\n");
+        reset();   
             
     } else if(errno == EAGAIN) {
         printf("Semaphore is locked \n");
