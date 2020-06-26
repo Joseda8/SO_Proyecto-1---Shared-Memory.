@@ -185,6 +185,7 @@ int main(int argc, char **argv){
    
     while(1) {
 
+        printf("FLAG: %i\n", buffer->flag_stop_producer);
         gettimeofday(&begin, NULL);
 
         if(!sem_wait(buf_sem)) {

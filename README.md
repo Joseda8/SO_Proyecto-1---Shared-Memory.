@@ -9,6 +9,7 @@ How to compile C files.
 
 ```
 gcc initializer.c -o init -pthread
+gcc finisher.c -o finish -pthread
 gcc writer.c -o writer -pthread -lm
 gcc reader.c -o reader -pthread -lm
 ```
@@ -19,12 +20,6 @@ Create a buffer.
 ```
 ./init create <name> <size>
 ./init create MyBuffer 1024
-```
-
-Delete a buffer.
-```
-./init destroy <ID>
-./init destroy 3600
 ```
 
 ##### Using writer.
@@ -44,4 +39,11 @@ Read a message.
 ./reader 3600 4 manual
 ```
 
+##### Using finisher.
+
+Delete a buffer.
+```
+./finish <ID>
+./finish 3600
+```
 

@@ -15,9 +15,9 @@ typedef struct{
     int time_locked;
     int time_usr;
     int time_kernel;
-    char finish_reader[4];
     int flag_stop_producer; //1: stop; 0: continue
     int total_msg;
+    char finish_reader[60];
     char msg[];
 } Buffer;
 
