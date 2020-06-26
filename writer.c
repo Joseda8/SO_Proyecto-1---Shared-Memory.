@@ -185,7 +185,6 @@ int main(int argc, char **argv){
    
     while(1) {
 
-        printf("FLAG: %i\n", buffer->flag_stop_producer);
         gettimeofday(&begin, NULL);
 
         if(!sem_wait(buf_sem)) {
@@ -278,6 +277,15 @@ int main(int argc, char **argv){
         buffer->producers_current -= 1;
         buffer->total_msg += prod_stats.total_msgs;
 
+        getrusage(RUSAGE_SELF, &usage);
+
+        prod_stats.kernel_time += usage.ru_stime.tv_usec;
+
+        buffer->time_kernel += prod_stats.kernel_time;
+        buffer->time_locked += prod_stats.time_blocked;
+        buffer->time_waiting += prod_stats.wait_time;
+        buffer->time_usr += usage.ru_utime.tv_usec;
+
         magenta();
 
         printf("Releasing semaphore...\n");
@@ -295,10 +303,6 @@ int main(int argc, char **argv){
     } else {
         perror("sem_trywait error \n");
     }
-
-    getrusage(RUSAGE_SELF, &usage);
-
-    prod_stats.kernel_time += usage.ru_stime.tv_usec;
 
     show_stats(&prod_stats);
     

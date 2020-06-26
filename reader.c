@@ -288,6 +288,10 @@ int main(int argc, char **argv){
     if(!sem_wait(buf_sem)) {
         buffer->consumers_current -= 1;
 
+        buffer->time_kernel += cons_stats.kernel_time;
+        buffer->time_waiting += cons_stats.wait_time;
+        buffer->time_locked += cons_stats.time_blocked;
+
         magenta();
 
         printf("Releasing semaphore...\n");
