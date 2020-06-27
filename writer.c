@@ -17,7 +17,7 @@
 #define BUF_SEM_NAME "BUF_SEM"
 #define MSG_LEN 60
 #define MAX_IN_MSG_LEN 29
-#define SLEEP_TIME 2
+#define SLEEP_TIME 5
 
 typedef struct{
     int pid;
