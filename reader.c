@@ -12,6 +12,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include "buffer_struct.h"
+#include "print_color.h"
 
 #define FALSE 0
 #define TRUE 1
@@ -58,22 +59,6 @@ int find_message(char *buf, int indexes, int current_index) {
     return -1;
 }
 
-void blue() {
-    printf("\033[1;34m");
-}
-
-void green() {
-    printf("\033[1;32m");
-}
-
-void magenta() {
-    printf("\033[1;35m");
-}
-
-void reset() {
-    printf("\033[0m");
-}
-
 int main(int argc, char **argv){
 
     struct rusage usage;
@@ -97,24 +82,24 @@ int main(int argc, char **argv){
     
     Buffer *buffer = (Buffer*) shmat(shmid, NULL, 0);
 
+    if(buffer == (void *) -1){
+        perror("Wrong ID");
+        exit(1);
+    }
+
     int spaces_max = (int)floor(buffer->size / MSG_LEN); // Calcula el número de índices que pueden tener mensajes.
 
     sem_t *buf_sem = sem_open(BUF_SEM_NAME, O_RDONLY);
-
-    int current_buffer_index = 0;  // Posicion del buffer por la que se va leyendo
-
-    struct timeval begin;  // Timers para medir tiempo bloqueado por semáforos.
-    struct timeval end;
 
     if(buf_sem == (void*) -1) {
         perror("sem_open error");
         exit(1);
     }
 
-    if(buffer == (void *) -1){
-        perror("Wrong ID");
-        exit(1);
-    }
+    int current_buffer_index = 0;  // Posicion del buffer por la que se va leyendo
+
+    struct timeval begin;  // Timers para medir tiempo bloqueado por semáforos.
+    struct timeval end;
 
     if(!strcmp(mode, MANUAL_MODE)) {
         // Bandera a modo de operacion manual

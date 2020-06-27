@@ -12,7 +12,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include "buffer_struct.h"
-
+#include "print_color.h"
 
 #define BUF_SEM_NAME "BUF_SEM"
 #define MSG_LEN 60
@@ -26,22 +26,6 @@ typedef struct{
     int time_blocked; // tiempo bloqueado por semáforo.
     int kernel_time;  // tiempo en kernel.
 } Stats;
-
-void blue() {
-    printf("\033[1;34m");
-}
-
-void green() {
-    printf("\033[1;32m");
-}
-
-void magenta() {
-    printf("\033[1;35m");
-}
-
-void reset() {
-    printf("\033[0m");
-}
 
 double get_waiting_time(double lambda) {
     double u;
@@ -155,6 +139,11 @@ int main(int argc, char **argv){
     
     Buffer *buffer = (Buffer*) shmat(shmid, NULL, 0);
 
+    if(buffer == (void *) -1){
+        perror("Wrong ID");
+        exit(1);
+    }
+
     int spaces_max = (int)floor(buffer->size / MSG_LEN); // Calcula el número de índices que pueden tener los mensajes.
 
     struct timeval begin, end;  // Timers para medir tiempo de bloqueo por semáforo.
@@ -163,11 +152,6 @@ int main(int argc, char **argv){
 
     if(buf_sem == (void*) -1) {
         perror("sem_open error");
-        exit(1);
-    }
-
-    if(buffer == (void *) -1){
-        perror("Wrong ID");
         exit(1);
     }
 

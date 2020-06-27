@@ -7,26 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "buffer_struct.h"
+#include "print_color.h"
 
 #define BUF_SEM_NAME "BUF_SEM"
 #define MSG_LEN 60
 #define TRUE 1
 
-void blue() {
-    printf("\033[1;34m");
-}
-
-void green() {
-    printf("\033[1;32m");
-}
-
-void magenta() {
-    printf("\033[1;35m");
-}
-
-void reset() {
-    printf("\033[0m");
-}
 
 void show_stats(Buffer *buffer) {
 
@@ -34,42 +20,42 @@ void show_stats(Buffer *buffer) {
     printf("Final Usage Stats of buffer: %s (ID: %i)\n", buffer->key, buffer->buffer_id);
     reset();
 
-    printf("Total consumers:         ");
+    printf("Total consumers:\t");
     blue();
-    printf("%d \n", buffer->consumers_total);
+    printf("%d\n", buffer->consumers_total);
     reset();
 
-    printf("Total producers:         ");
+    printf("Total producers:\t");
     blue();
     printf("%d \n", buffer->producers_total);
     reset();
 
-    printf("Consumers removed by key:         ");
+    printf("Consumers removed by key:\t");
     blue();
     printf("%d \n\n", buffer->consumers_key_removed);
     reset();
 
-    printf("Time waited:         ");
+    printf("Time waited:\t");
     blue();
     printf("%d \n", buffer->time_waited);
     reset();
 
-    printf("Time locked:         ");
+    printf("Time locked:\t");
     blue();
     printf("%d \n", buffer->time_locked);
     reset();
 
-    printf("Time user:         ");
+    printf("Time user:\t");
     blue();
     printf("%d \n", buffer->time_usr);
     reset();
 
-    printf("Time kernel:         ");
+    printf("Time kernel:\t");
     blue();
     printf("%d \n", buffer->time_kernel);
     reset();
 
-    printf("Total messages:         ");
+    printf("Total messages:\t");
     blue();
     printf("%d \n", buffer->total_msg);
     reset();
