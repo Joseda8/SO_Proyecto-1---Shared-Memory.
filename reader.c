@@ -211,6 +211,7 @@ int main(int argc, char **argv){
             if (magic_number == mag_msg_number) {
                 strcat(cons_stats.exitCause, "Magic number matched!");
                 cons_stats.total_msgs_read += 1;
+                buffer->consumers_key_removed += 1;
                 sem_post(buf_sem);
                 break;
             }
