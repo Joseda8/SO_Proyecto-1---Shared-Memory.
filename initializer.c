@@ -60,6 +60,9 @@ int create_shmem(char* key_name, int size){
     return shmid;
 }
 
+/*
+Crea el semáforo
+*/
 void create_semaphore() {
 
     sem_t *buf_sem = sem_open(BUF_SEM_NAME, O_CREAT, 0666, 1);

@@ -28,7 +28,7 @@ int find_space(char *buf, int indexes) {
         ctr += MSG_LEN;
         tmp_ind--;
     }
-    return words;
+    return words-1;
 }
 
 
@@ -55,7 +55,7 @@ void show_stats(Buffer *buffer) {
 
     printf("Time Waited:\t");
     blue();
-    printf("%d seconds \n", buffer->time_waited);
+    printf("%d seconds \n", buffer->time_waiting);
     reset();
 
     printf("Time Blocked:\t");
