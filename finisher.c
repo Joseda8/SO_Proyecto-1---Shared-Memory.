@@ -35,24 +35,24 @@ void show_stats(Buffer *buffer) {
     printf("%d \n\n", buffer->consumers_key_removed);
     reset();
 
-    printf("Time waited:\t");
+    printf("Time Waited:\t");
     blue();
-    printf("%d \n", buffer->time_waited);
+    printf("%d seconds \n", buffer->time_waited);
     reset();
 
-    printf("Time locked:\t");
+    printf("Time Blocked:\t");
     blue();
-    printf("%d \n", buffer->time_locked);
+    printf("%d microseconds \n", buffer->time_locked);
     reset();
 
-    printf("Time user:\t");
+    printf("User Time:\t");
     blue();
-    printf("%d \n", buffer->time_usr);
+    printf("%d microseconds \n", buffer->time_usr);
     reset();
 
-    printf("Time kernel:\t");
+    printf("Kernel Time:\t");
     blue();
-    printf("%d \n", buffer->time_kernel);
+    printf("%d microseconds \n", buffer->time_kernel);
     reset();
 
     printf("Total messages:\t");
