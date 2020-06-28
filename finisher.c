@@ -6,12 +6,30 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "buffer_struct.h"
 #include "print_color.h"
 
 #define BUF_SEM_NAME "BUF_SEM"
 #define MSG_LEN 60
 #define TRUE 1
+
+
+// trata de encontrar un espacio en el buffer para poner el mensaje. Si no se encuentra retorna -1.
+int find_space(char *buf, int indexes) {
+    int tmp_ind = indexes;
+    int ctr = 0;
+    int words = 0;
+    char start = '(';
+    while(tmp_ind > 0) {
+        if(buf[ctr] == start) {
+            words++;
+        }
+        ctr += MSG_LEN;
+        tmp_ind--;
+    }
+    return words;
+}
 
 
 void show_stats(Buffer *buffer) {
@@ -53,6 +71,13 @@ void show_stats(Buffer *buffer) {
     printf("Kernel Time:\t");
     blue();
     printf("%d microseconds \n", buffer->time_kernel);
+    reset();
+
+    int spaces_max = (int)floor(buffer->size / MSG_LEN); // Calcula el número de índices que pueden tener los mensajes.
+
+    printf("Messages in buffer:\t");
+    blue();
+    printf("%d\n", find_space(buffer->msg, spaces_max));
     reset();
 
     printf("Total messages:\t");
