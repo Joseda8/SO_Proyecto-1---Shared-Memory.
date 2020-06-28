@@ -1,5 +1,5 @@
 # Proyecto 1 de Sistemas Operativos - Instituto Tecnológico de Costa Rica
-## Shared Memory (GitHub link: https://github.com/Joseda8/SO_Proyecto-1---Shared-Memory)
+## Shared Memory (GitHub link: https://github.com/Joseda8/SO_Proyecto-1---Shared-Memory.)
 
 ### Commands index
 
