@@ -277,6 +277,7 @@ int main(int argc, char **argv){
         buffer->time_kernel += cons_stats.kernel_time;
         buffer->time_waiting += cons_stats.wait_time;
         buffer->time_locked += cons_stats.time_blocked;
+        buffer->time_usr += usage.ru_utime.tv_usec;
 
         magenta();
 
